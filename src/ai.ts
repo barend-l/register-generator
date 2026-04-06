@@ -132,7 +132,73 @@ Antwoord uitsluitend in JSON:
   }
 }
 
-// Step 4: Categorize terms into a register structure
+// Step 4: Classify terms into 3 hierarchy levels (real terms, not invented categories)
+export async function classifyTermLevels(
+  terms: string[],
+  signal?: AbortSignal
+): Promise<{ term: string; level: 1 | 2 | 3; parent: string | null }[]> {
+  const prompt = `Je bent een professionele registermaker voor een Nederlands (onderwijs)boek.
+
+Hieronder staat een lijst met registertermen die allemaal in het boek voorkomen met eigen paginanummers. Bepaal voor elke term het inspringniveau in het register:
+
+- Niveau 1 (hoofdterm): Brede, overkoepelende begrippen die als kopje in het register staan. Dit zijn ECHTE termen uit het boek, GEEN verzonnen categorieën. Bijvoorbeeld: "AI geletterdheid", "formatief toetsen", "constructieve afstemming".
+- Niveau 2 (subterm): Specifiekere begrippen die logisch onder een hoofdterm vallen. Bijvoorbeeld: "kritisch denken" onder "AI geletterdheid".
+- Niveau 3 (sub-subterm): Heel specifieke begrippen die onder een subterm vallen. Gebruik dit spaarzaam.
+
+BELANGRIJK:
+- Alle niveaus zijn ECHTE termen uit het boek met eigen paginanummers
+- Verzin GEEN nieuwe categorienamen - gebruik alleen termen uit de lijst
+- De meeste termen zullen niveau 1 zijn (zelfstandig in het register)
+- Alleen als er een duidelijke hiërarchische relatie bestaat, maak je een term niveau 2 of 3
+- Een term kan alleen parent zijn als die zelf ook in de lijst staat
+- Geef voor niveau 2 en 3 termen de exacte naam van de bovenliggende term als "parent"
+
+Antwoord uitsluitend in JSON-array:
+[
+  { "term": "AI geletterdheid", "level": 1, "parent": null },
+  { "term": "kritisch denken", "level": 2, "parent": "AI geletterdheid" },
+  { "term": "bronnenonderzoek", "level": 3, "parent": "kritisch denken" }
+]
+
+De termen:
+${JSON.stringify(terms)}`;
+
+  const content = await callAI(
+    [{ role: 'user', content: prompt }],
+    0.2,
+    signal
+  );
+
+  try {
+    const result = extractJson(content, 'array') as { term?: string; level?: number; parent?: string | null }[];
+
+    const termSet = new Set(terms);
+    const entries: { term: string; level: 1 | 2 | 3; parent: string | null }[] = [];
+    const classified = new Set<string>();
+
+    for (const item of result) {
+      if (!item.term || !termSet.has(item.term) || classified.has(item.term)) continue;
+      const level = (item.level === 1 || item.level === 2 || item.level === 3) ? item.level : 1;
+      const parent = level === 1 ? null : (item.parent && termSet.has(item.parent) ? item.parent : null);
+      entries.push({ term: item.term, level: level as 1 | 2 | 3, parent });
+      classified.add(item.term);
+    }
+
+    // Add any terms that weren't classified as level 1
+    for (const t of terms) {
+      if (!classified.has(t)) {
+        entries.push({ term: t, level: 1, parent: null });
+      }
+    }
+
+    return entries;
+  } catch {
+    // Fallback: all terms as level 1
+    return terms.map(t => ({ term: t, level: 1, parent: null }));
+  }
+}
+
+// Step 4 (legacy): Categorize terms into a register structure
 export async function categorizeTerms(
   terms: string[],
   signal?: AbortSignal

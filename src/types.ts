@@ -11,12 +11,19 @@ export interface TermEntry {
   mergedFrom?: string[]; // terms that were merged into this one
 }
 
-// New: flexible register node for visual editor (up to 3 levels)
+// Register hierarchy entry: each term has a level (1-3) and optional parent
+export interface RegisterEntry {
+  term: string;          // matches TermEntry.term
+  level: 1 | 2 | 3;     // 1 = hoofdterm, 2 = subterm, 3 = sub-subterm
+  parentTerm: string | null; // null for level 1, parent term text for level 2/3
+}
+
+// Legacy types kept for backward compat during migration
 export interface RegisterNode {
   id: string;
   label: string;
-  level: 0 | 1 | 2; // 0 = root category, 1 = subcategory, 2 = sub-subcategory
-  termId?: string;   // links to a TermEntry if this is a term (leaf)
+  level: 0 | 1 | 2;
+  termId?: string;
   children: RegisterNode[];
   collapsed?: boolean;
 }
@@ -59,6 +66,7 @@ export interface AppState {
   // Step 3
   terms: TermEntry[];
   // Step 4 - register editor
+  registerEntries: RegisterEntry[];
   registerNodes: RegisterNode[];
   useCategorized: boolean;
   categories: Category[]; // kept for backward compat
@@ -83,6 +91,7 @@ export const DEFAULT_STATE: Omit<AppState, 'pdfFile'> & { pdfFile: null } = {
   isPaused: false,
   currentAnalysisPage: 0,
   terms: [],
+  registerEntries: [],
   registerNodes: [],
   useCategorized: true,
   categories: [],
