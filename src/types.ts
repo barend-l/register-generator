@@ -11,14 +11,24 @@ export interface TermEntry {
   mergedFrom?: string[]; // terms that were merged into this one
 }
 
+// New: flexible register node for visual editor (up to 3 levels)
+export interface RegisterNode {
+  id: string;
+  label: string;
+  level: 0 | 1 | 2; // 0 = root category, 1 = subcategory, 2 = sub-subcategory
+  termId?: string;   // links to a TermEntry if this is a term (leaf)
+  children: RegisterNode[];
+  collapsed?: boolean;
+}
+
 export interface Category {
   name: string;
-  subcategories: SubCategory[];
+  subcategories?: SubCategory[];
 }
 
 export interface SubCategory {
   name: string;
-  terms: string[];
+  terms?: string[];
 }
 
 export interface AnalysisResult {
@@ -48,9 +58,11 @@ export interface AppState {
   currentAnalysisPage: number;
   // Step 3
   terms: TermEntry[];
-  categories: Category[];
+  // Step 4 - register editor
+  registerNodes: RegisterNode[];
   useCategorized: boolean;
-  // Step 4
+  categories: Category[]; // kept for backward compat
+  // Export settings
   fontFamily: string;
   fontSize: number;
 }
@@ -71,8 +83,9 @@ export const DEFAULT_STATE: Omit<AppState, 'pdfFile'> & { pdfFile: null } = {
   isPaused: false,
   currentAnalysisPage: 0,
   terms: [],
+  registerNodes: [],
+  useCategorized: true,
   categories: [],
-  useCategorized: false,
   fontFamily: 'Arial',
   fontSize: 10,
 };
