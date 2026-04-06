@@ -139,25 +139,38 @@ export async function classifyTermLevels(
 ): Promise<{ term: string; level: 1 | 2 | 3; parent: string | null }[]> {
   const prompt = `Je bent een professionele registermaker voor een Nederlands (onderwijs)boek.
 
-Hieronder staat een lijst met registertermen die allemaal in het boek voorkomen met eigen paginanummers. Bepaal voor elke term het inspringniveau in het register:
+Hieronder staat een lijst met ${terms.length} registertermen. Organiseer deze in een hiërarchisch register met 3 inspringniveaus.
 
-- Niveau 1 (hoofdterm): Brede, overkoepelende begrippen die als kopje in het register staan. Dit zijn ECHTE termen uit het boek, GEEN verzonnen categorieën. Bijvoorbeeld: "AI geletterdheid", "formatief toetsen", "constructieve afstemming".
-- Niveau 2 (subterm): Specifiekere begrippen die logisch onder een hoofdterm vallen. Bijvoorbeeld: "kritisch denken" onder "AI geletterdheid".
-- Niveau 3 (sub-subterm): Heel specifieke begrippen die onder een subterm vallen. Gebruik dit spaarzaam.
+HOE EEN BOEKREGISTER WERKT:
+Een register in een boek heeft inspringniveaus. Een brede overkoepelende term is niveau 1. Specifiekere gerelateerde termen staan ingesprongen eronder als niveau 2. Nog specifiekere termen als niveau 3.
 
-BELANGRIJK:
-- Alle niveaus zijn ECHTE termen uit het boek met eigen paginanummers
-- Verzin GEEN nieuwe categorienamen - gebruik alleen termen uit de lijst
-- De meeste termen zullen niveau 1 zijn (zelfstandig in het register)
-- Alleen als er een duidelijke hiërarchische relatie bestaat, maak je een term niveau 2 of 3
-- Een term kan alleen parent zijn als die zelf ook in de lijst staat
-- Geef voor niveau 2 en 3 termen de exacte naam van de bovenliggende term als "parent"
+Voorbeeld van een goed register:
+  AI geletterdheid → niveau 1
+    kritisch denken → niveau 2 (valt onder AI geletterdheid)
+    digital agency → niveau 2 (valt onder AI geletterdheid)
+  constructieve afstemming → niveau 1
+    learning outcomes → niveau 2 (valt onder constructieve afstemming)
+    toetsvormen → niveau 2 (valt onder constructieve afstemming)
+      rubric → niveau 3 (valt onder toetsvormen)
+  formatief handelen → niveau 1
+    feedback → niveau 2 (valt onder formatief handelen)
+    peer assessment → niveau 2 (valt onder formatief handelen)
 
-Antwoord uitsluitend in JSON-array:
+REGELS:
+- Alle termen komen uit de lijst - verzin GEEN nieuwe namen of categorieën
+- Zoek actief naar hiërarchische relaties tussen de termen
+- Ongeveer 30-50% van de termen zou niveau 1 moeten zijn (de brede concepten)
+- Ongeveer 40-60% niveau 2 (specifiekere termen onder een breder concept)
+- Niveau 3 is optioneel en spaarzaam (0-15%)
+- Een parent moet zelf ook een term uit de lijst zijn
+- Als een term nergens logisch onder valt, maak het niveau 1
+- Groepeer termen die inhoudelijk samenhangen
+
+Antwoord uitsluitend in JSON-array. Elke term uit de lijst MOET voorkomen:
 [
   { "term": "AI geletterdheid", "level": 1, "parent": null },
   { "term": "kritisch denken", "level": 2, "parent": "AI geletterdheid" },
-  { "term": "bronnenonderzoek", "level": 3, "parent": "kritisch denken" }
+  { "term": "rubric", "level": 3, "parent": "toetsvormen" }
 ]
 
 De termen:
