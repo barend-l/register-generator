@@ -152,20 +152,6 @@ export function Step4Export({ state, setState, onPrev }: Step4Props) {
     }
   };
 
-  // Update a register entry
-  const updateEntry = useCallback((term: string, updates: Partial<RegisterEntry>) => {
-    setState(prev => {
-      const newEntries = [...(prev.registerEntries || [])];
-      const idx = newEntries.findIndex(e => e.term === term);
-      if (idx >= 0) {
-        newEntries[idx] = { ...newEntries[idx], ...updates };
-      } else {
-        newEntries.push({ term, level: 1, parentTerm: null, ...updates });
-      }
-      return { ...prev, registerEntries: newEntries };
-    });
-  }, [setState]);
-
   // Remove term from register (deselect)
   const removeTerm = useCallback((termName: string) => {
     setState(prev => {
