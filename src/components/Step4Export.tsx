@@ -355,8 +355,6 @@ export function Step4Export({ state, setState, onPrev }: Step4Props) {
 
     // Determine the new parent based on the drop position
     // Look at the item above the drop position to determine context
-    const targetItem = displayItems[targetIndex];
-    const itemAbove = targetIndex > 0 ? displayItems[targetIndex - 1] : null;
     const dragEntry = entries.find(e => e.term === dragTerm);
     if (!dragEntry) return;
 
